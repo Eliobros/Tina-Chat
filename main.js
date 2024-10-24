@@ -1,3 +1,6 @@
+// Array para armazenar usuários na memória
+let users = [];
+
 // Alternar entre Cadastro e Login
 document.getElementById('toggle-link').addEventListener('click', function(event) {
     event.preventDefault();
@@ -30,27 +33,32 @@ document.getElementById('register-form').addEventListener('submit', function(eve
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
 
-    const userData = { name, email, password };
+    // Tente registrar o usuário
+    const response = registerUser(name, email, password);
+    alert(response.message);
 
-    // Enviar dados de cadastro ao servidor
-    fetch('/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Usuário cadastrado com sucesso!');
-            window.location.href = "chat.html";
-        } else {
-            alert('Erro no cadastro: ' + data.message);
-        }
-    })
-    .catch(error => console.error('Erro:', error));
+    if (response.success) {
+        window.location.href = "chat.html";
+    }
 });
+
+// Função para registrar usuários
+function registerUser(name, email, password) {
+    // Verifica se todos os campos foram preenchidos
+    if (!name || !email || !password) {
+        return { success: false, message: 'Preencha todos os campos!' };
+    }
+
+    // Verifica se o email já foi cadastrado
+    const existingUser = users.find(user => user.email === email);
+    if (existingUser) {
+        return { success: false, message: 'Email já cadastrado!' };
+    }
+
+    // Adiciona novo usuário ao array
+    users.push({ name, email, password });
+    return { success: true, message: 'Usuário cadastrado com sucesso!' };
+}
 
 // Lógica para Login
 document.getElementById('login-form').addEventListener('submit', function(event) {
@@ -59,24 +67,21 @@ document.getElementById('login-form').addEventListener('submit', function(event)
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
-    const loginData = { email, password };
+    // Tente fazer login
+    const response = loginUser(email, password);
+    alert(response.message);
 
-    // Enviar dados de login ao servidor
-    fetch('/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(loginData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Login efetuado com sucesso!');
-            window.location.href = "chat.html";
-        } else {
-            alert('Erro no login: ' + data.message);
-        }
-    })
-    .catch(error => console.error('Erro:', error));
+    if (response.success) {
+        window.location.href = "chat.html";
+    }
 });
+
+// Função para fazer login
+function loginUser(email, password) {
+    const user = users.find(user => user.email === email && user.password === password);
+    if (user) {
+        return { success: true, message: 'Login efetuado com sucesso!' };
+    } else {
+        return { success: false, message: 'Email ou senha incorretos!' };
+    }
+    }
