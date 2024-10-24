@@ -12,7 +12,7 @@ body {
 .chat-container {
     width: 400px;
     margin: 50px auto;
-    background-color: white;
+    background-color: #f0f0f0;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
@@ -26,7 +26,7 @@ body {
     align-items: center;
     background-color: #0097fe;
     padding: 15px;
-    color: white;
+    color: #ffffff;
 }
 
 .header-component .avatar {
@@ -68,7 +68,7 @@ body {
 }
 
 .message.bot .message-bubble {
-    background-color: #4b0082;
+    background-color: #80d4ff;
     color: white;
     align-self: flex-start;
 }
@@ -96,7 +96,7 @@ body {
 }
 
 .message-input-component button {
-    background-color: #4b0082;
+    background-color: #007acc;
     color: white;
     border: none;
     border-radius: 20px;
