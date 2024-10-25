@@ -9,7 +9,7 @@
 <body>
     <div class="chat-container">
         <div class="header-component">
-            <img src="tina-logo.jpg" alt="Tina Avatar" class="avatar">
+            <img src="tina-logo.jpg" onclick="verFoto()" alt="Tina Avatar" class="avatar">
             <h2>Tina</h2>
             <span class="settings-icon">&#9881;</span>
         </div>
@@ -22,5 +22,10 @@
         </div>
     </div>
     <script src="app.js"></script>
+    <script>
+        function verFoto(){
+            window.location.href = "tina-logo.jpg";
+        }
+    </script>
 </body>
   </html>
