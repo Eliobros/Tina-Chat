@@ -65,7 +65,7 @@ body {
 .message.user .message-bubble {
     background-color: #e0e0e0;
     align-self: flex-end;
-    left:40%;
+    right:40%;
     position: relative;
     
 }
