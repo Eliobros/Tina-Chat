@@ -1,4 +1,4 @@
-const API_KEY = 'app-m9OBA7xcmPhTiWXQ4WrllHXL';  // Substitua com sua chave da API
+const API_KEY = 'app-hgPLZZdMkkfJQsHoaos1JtLk';  // Substitua com sua chave da API
 const DIFY_API_URL = 'https://api.dify.ai/v1/chat-messages';
 
 async function sendMessage() {
