@@ -65,8 +65,7 @@ body {
 .message.user .message-bubble {
     background-color: #e0e0e0;
     align-self: flex-end;
-    margin-left: auto;
-    position: relative;
+    
     
 }
 
@@ -74,6 +73,8 @@ body {
     background-color: #80d4ff;
     color: white;
     align-self: flex-start;
+    left:40%;
+    position: relative;
 }
 
 .message-time {
