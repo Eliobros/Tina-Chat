@@ -1,87 +1,160 @@
-// Array para armazenar usuários na memória
-let users = [];
+const API_KEY = 'app-hWyXMuzlYLsodBKfZH5BhXR6';  // Substitua com sua chave da API Dify
+const DIFY_API_URL = 'https://api.dify.ai/v1/chat-messages';
 
-// Alternar entre Cadastro e Login
-document.getElementById('toggle-link').addEventListener('click', function(event) {
-    event.preventDefault();
-    
-    const registerForm = document.getElementById('register-form');
-    const loginForm = document.getElementById('login-form');
-    const formTitle = document.getElementById('form-title');
-    const toggleText = document.getElementById('toggle-text');
+let userName = ''; // Variável para armazenar o nome do usuário
 
-    if (loginForm.style.display === "none") {
-        // Exibir login
-        loginForm.style.display = "block";
-        registerForm.style.display = "none";
-        formTitle.textContent = "Login";
-        toggleText.innerHTML = 'Não tem uma conta? <a href="#" id="toggle-link">Cadastrar</a>';
-    } else {
-        // Exibir cadastro
-        loginForm.style.display = "none";
-        registerForm.style.display = "block";
-        formTitle.textContent = "Cadastro";
-        toggleText.innerHTML = 'Já tem uma conta? <a href="#" id="toggle-link">Entrar</a>';
-    }
-});
+document.addEventListener('DOMContentLoaded', carregarMensagens); // Carregar mensagens ao carregar a página
 
-// Lógica para Cadastro
-document.getElementById('register-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    const name = document.getElementById('register-name').value;
-    const email = document.getElementById('register-email').value;
-    const password = document.getElementById('register-password').value;
-
-    // Tente registrar o usuário
-    const response = registerUser(name, email, password);
-    alert(response.message);
-
-    if (response.success) {
-        window.location.href = "chat.html";
-    }
-});
-
-// Função para registrar usuários
-function registerUser(name, email, password) {
-    // Verifica se todos os campos foram preenchidos
-    if (!name || !email || !password) {
-        return { success: false, message: 'Preencha todos os campos!' };
-    }
-
-    // Verifica se o email já foi cadastrado
-    const existingUser = users.find(user => user.email === email);
-    if (existingUser) {
-        return { success: false, message: 'Email já cadastrado!' };
-    }
-
-    // Adiciona novo usuário ao array
-    users.push({ name, email, password });
-    return { success: true, message: 'Usuário cadastrado com sucesso!' };
+// Função para definir o nome do usuário após login/cadastro
+function setUserName(name) {
+    userName = name; // Define o nome do usuário
 }
 
-// Lógica para Login
-document.getElementById('login-form').addEventListener('submit', function(event) {
-    event.preventDefault();
+// Enviar mensagem
+async function sendMessage() {
+    const messageInput = document.getElementById('userMessage');
+    const messageText = messageInput.value.trim();
 
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+    if (messageText !== "") {
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Tente fazer login
-    const response = loginUser(email, password);
-    alert(response.message);
+        // Exibe a mensagem do usuário no chat
+        appendMessage('user', `${userName}: ${messageText}`, currentTime); // Inclui o nome do usuário
 
-    if (response.success) {
-        window.location.href = "chat.html";
+        // Salva a mensagem no sessionStorage
+        salvarMensagem('user', `${userName}: ${messageText}`, currentTime);
+
+        // Limpa o campo de input
+        messageInput.value = "";
+
+        // Rola para o final do chat
+        scrollToBottom();
+
+        // Verifica se a mensagem é sobre pagamento
+        if (messageText.toLowerCase() === "pagamento") {
+            const payment_url = "https://tinapagamentos.netlify.app/";
+            appendMessage('bot', `Assistente Tina: Você pode realizar o pagamento através do seguinte link: ${payment_url}`, currentTime);
+
+            // Salva a resposta no sessionStorage
+            salvarMensagem('bot', `Assistente Tina: Você pode realizar o pagamento através do seguinte link: ${payment_url}`, currentTime);
+        } else {
+            // Chamar a API Dify
+            const response = await sendMessageToAPI(messageText);
+
+            if (response) {
+                const botMessage = response.answer || 'Desculpe, não consegui entender sua pergunta.';
+                appendMessage('bot', `Assistente Tina: ${botMessage}`, currentTime); // Prefixo "Assistente Tina"
+
+                // Salva a resposta no sessionStorage
+                salvarMensagem('bot', `Assistente Tina: ${botMessage}`, currentTime);
+            } else {
+                appendMessage('bot', 'Assistente Tina: Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.', currentTime);
+
+                // Salva a mensagem de erro no sessionStorage
+                salvarMensagem('bot', 'Assistente Tina: Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.', currentTime);
+            }
+        }
+
+        // Rola para o final após a resposta
+        scrollToBottom();
+    }
+}
+
+async function sendMessageToAPI(userMessage) {
+    try {
+        const data = {
+            query: userMessage,
+            inputs: {},
+            response_mode: "blocking",
+            user: `${Date.now()}`,  // ID dinâmico com base no timestamp
+            conversation_id: "",
+            files: []
+        };
+
+        const headers = {
+            "Authorization": `Bearer ${API_KEY}`,
+            "Content-Type": "application/json"
+        };
+
+        // Fazer a requisição POST para a API Dify
+        const response = await fetch(DIFY_API_URL, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            const responseData = await response.json();
+            console.log('Resposta da API:', responseData);
+            return responseData;
+        } else {
+            console.error('Erro na resposta da API:', response.status);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro ao chamar a API:', error);
+        alert('Ocorreu um erro ao chamar a API. Tente novamente mais tarde.');
+        return null;
+    }
+}
+
+function appendMessage(sender, messageText, time) {
+    const messageContainer = document.createElement('div');
+    messageContainer.classList.add('message', sender);
+
+    const messageBubble = document.createElement('div');
+    messageBubble.classList.add('message-bubble');
+    messageBubble.textContent = messageText;
+
+    const messageTime = document.createElement('span');
+    messageTime.classList.add('message-time');
+    messageTime.textContent = time;
+
+    messageBubble.appendChild(messageTime);
+    messageContainer.appendChild(messageBubble);
+
+    const chatBox = document.getElementById('chatBox');
+    if (chatBox) {
+        chatBox.appendChild(messageContainer);
+    }
+}
+
+// Função para salvar uma mensagem no sessionStorage
+function salvarMensagem(sender, messageText, time) {
+    let mensagens = JSON.parse(sessionStorage.getItem('chat')) || [];
+
+    const novaMensagem = {
+        sender: sender,
+        message: messageText,
+        time: time
+    };
+
+    mensagens.push(novaMensagem);
+    sessionStorage.setItem('chat', JSON.stringify(mensagens));
+}
+
+// Função para carregar mensagens do sessionStorage
+function carregarMensagens() {
+    const mensagens = JSON.parse(sessionStorage.getItem('chat')) || [];
+
+    mensagens.forEach(mensagem => {
+        appendMessage(mensagem.sender, mensagem.message, mensagem.time);
+    });
+}
+
+function scrollToBottom() {
+    const chatBox = document.getElementById('chatBox');
+    if (chatBox) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+}
+
+// Associar evento ao botão de envio de mensagem
+document.getElementById('sendMessage').addEventListener('click', sendMessage);
+
+// Para enviar a mensagem ao pressionar Enter
+document.getElementById('userMessage').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
     }
 });
-
-// Função para fazer login
-function loginUser(email, password) {
-    const user = users.find(user => user.email === email && user.password === password);
-    if (user) {
-        return { success: true, message: 'Login efetuado com sucesso!' };
-    } else {
-        return { success: false, message: 'Email ou senha incorretos!' };
-    }
-    }
